@@ -1,0 +1,179 @@
+character_classes = {
+    "1": {
+        "name": "Warrior",
+        "description": "A mighty warrior skilled in close combat.",
+        "health": 100,
+        "armor": 15,
+        "damage": 30,
+        "skill": {
+            "Power Attack":{
+                "damage": 8,
+                "description": "You powerfully attack the enemy with everything you have"
+            }
+        }
+    },
+    "2": {
+        "name": "Mage",
+        "description": "A master of arcane magic with devastating spellcasting abilities.",
+        "health": 60,
+        "armor": 20,
+        "damage": 50,
+        "skill": {
+            "Magic Missile":{
+                "damage": 12,
+                "description": "You cast your specialty magic missile and smile as three glowing darts fly towards your enemy"
+            }
+        }
+    },
+    "3": {
+        "name": "Rogue",
+        "description": "A stealthy and agile thief, specializing in traps and sneak attacks.",
+        "health": 80,
+        "armor": 30,
+        "damage": 40,
+        "skill": {
+            "Backstab":{
+                "damage": 10,
+                "description": "You roll behind your enemy and dig your weapon deeply into their back"
+            }
+        }
+    }
+}
+
+monsters = {
+    "Zombie": {
+        "health": 22,
+        "armor": 8,
+        "damage": "1d6"
+    },
+    "Skeleton": {
+        "health": 13,
+        "armor": 13,
+        "damage": "1d6"
+    },
+    "Kobold": {
+        "health": 5,
+        "armor": 12,
+        "damage": "1d4"
+    },
+
+main_floor = {
+    "entrance": {
+        "name": "Entrance",
+        "description": "You stand at the entrance of the Unholy temple.",
+        "north": "corridor1",
+        "items": []  # No items in the entrance room.
+    },
+    "corridor1": {
+        "name": "Corridor 1",
+        "description": "You find yourself in a dimly lit corridor.",
+        "north": "corridor2",
+        "east": "damp_room",  
+        "south": "entrance",
+        "items": [],  # No items in this room.
+        "monster": "Zombie"
+    },
+    "corridor2": {
+        "name": "Corridor 2",
+        "description": "You continue through the winding corridor.",
+        "north": "corridor3",
+        "south": "corridor1",
+        "east": "torture_chamber",
+        "west": "chamber_of_remnants",
+        "items": []  # No items in this room.
+    },
+    "corridor3": {
+        "name": "Corridor 3",
+        "description": "You enter a long corridor with eerie whispers echoing.",
+        "north": "hall_of_mirrors",
+        "west": "unholy_archives",
+        "south": "corridor2",
+        "items": []  # No items in this room.
+    },
+    "hall_of_mirrors": {
+        "name": "Hall of Mirrors",
+        "description": "You stand in a chamber filled with mirrors reflecting twisted images, nausea and disorientation set it, dont get lost",
+        "west": "altar_room",
+        "north": "summoning_chamber",
+        "east": "corridor3",
+        "south": "chamber_of_shadows",
+        "items": []  # No items in this room.
+    },
+
+while True:
+    # Clear the screen after the first time the player leaves the entrance
+    if not first_time_in_entrance:
+        time.sleep(1)  # Add a 1-second delay
+        clear_screen()
+
+    # Display the current location's name and description
+    location = main_floor[current_location]
+    print(f"\n{location['name']}")
+    print(location['description'])
+
+    # Set the flag to False after leaving the entrance for the first time
+    if current_location != "entrance":
+        first_time_in_entrance = False
+
+    # Display the available commands
+    displayCommandList()
+
+    # Get available directions to move from the current location
+    available_directions = [direction for direction in location if direction not in ["name", "description"]]
+    
+    # Ask the player for their next move
+    next_move = input("Enter your command: ")
+
+    # Check if the player wants to exit the game
+    if next_move.lower() == "exit":
+        print("Thank you for playing! Goodbye.")
+        break
+
+    # Check if the player wants to look at available directions
+    if next_move.lower() == "look":
+        print("Available directions:", ", ".join(available_directions))
+    elif next_move.startswith("go "):
+        # Extract the direction from the command
+        direction = next_move.split(" ", 1)[1]
+        # Check if the chosen direction is valid
+        if direction in available_directions:
+            # Move the player to the next location
+            current_location = location[direction]
+        else:
+            print("Invalid direction. Please choose a valid direction.")
+    else:
+        print("Invalid command. Please enter a valid command.")
+
+    def roll(dice):
+        num_dice, dice_sides = map(int, dice.split('d'))
+        total = sum(random.randint(1, dice_sides) for _ in range(num_dice))
+        return total
+
+I need to build a combat function that does the following steps:
+Step1:
+Check when a player enters a room if there's a monster in the room.
+
+Step2:
+If there is a monster, the player is asked if they want to run or fight.
+
+Step3:
+If they choose run:
+	Roll 1d20, if greater than 13, they succeed.
+	if they fail, initiate combat
+If they choose fight, or fail a run roll initiate combat
+	set player skill charge to 1 for warrior and rogue, 5 for mage
+	Ask the player if they want to '1. attack' or '2. use x skill (Power Attack, Magic Missile or Backstab).
+		if they choose '2' they immediately do skill damage
+			reduce monster health by player damage
+			reduce charge for player damage by 1
+		if they choose '1' they roll 1d20 to hit.  If greater than monster armor rating, they hit.
+			If they miss, it's the monster's turn
+			if they hit, they roll character damage roll for damage
+				reduce monster health by player damage
+	if the monster is still alive, it takes a turn
+		1d20 is rolled to see if the monster hits.  If greater than the player's armor value, it hits.
+			if miss, print("monster missed it's attack")
+			if hit, roll monster damage dice to see damage
+				reduce player health by damage number
+
+If both the monster and player are still alive, another round of combat begins
